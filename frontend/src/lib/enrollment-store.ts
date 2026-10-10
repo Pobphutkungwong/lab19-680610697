@@ -51,7 +51,6 @@ type EnrollmentStore = {
   removeCourse: (courseId: string) => Promise<void>;
   /** POST /enrollments — throw ApiError ถ้า Backend ไม่รับ */
   enroll: (studentId: string, courseId: string) => Promise<void>;
-  // TODO การบ้าน 2.3: action เปลี่ยนวิชา (PUT /enrollments) และยกเลิก (DELETE /enrollments)
   updateEnrollment: (studentId: string, courseId: string, newCourseId: string) => Promise<void>;
   dropEnrollment: (studentId: string, courseId: string) => Promise<void>;
 };
@@ -204,49 +203,5 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
         (e) => !(e.studentId === studentId && e.courseId === courseId),
       ),
     }));
-  }
-  
-addStudent: async (studentData) => {
-  const payload = {
-    ...studentData,
-    emails: studentData.emails.map((e) => e.address),
-  };
-  const res = await api().post("/students", payload);
-  set((state) => ({ students: [...state.students, fromApiStudent(res.data.data)] }));
-},
-
-updateStudent: async (studentData) => {
-  const payload = {
-    ...studentData,
-    emails: studentData.emails.map((e) => e.address),
-  };
-  const res = await api().put("/students", payload);
-  const updated = fromApiStudent(res.data.data);
-  set((state) => ({
-    students: state.students.map((s) => (s.studentId === updated.studentId ? updated : s)),
-  }));
-},
-
-removeStudent: async (studentId) => {
-  await api().delete("/students", { data: { studentId } });
-  set((state) => ({
-    students: state.students.filter((s) => s.studentId !== studentId),
-    enrollments: state.enrollments.filter((e) => e.studentId !== studentId),
-  }));
-},
-
-updateEnrollment: async (studentId, courseId, newCourseId) => {
-  const res = await api().put("/enrollments", { studentId, courseId, newCourseId });
-  const updated = res.data.data;
-  set((state) => ({
-    enrollments: state.enrollments.map((e) => (e.id === updated.id ? updated : e)),
-  }));
-},
-
-dropEnrollment: async (studentId, courseId) => {
-  await api().delete("/enrollments", { data: { studentId, courseId } });
-  set((state) => ({
-    enrollments: state.enrollments.filter((e) => !(e.studentId === studentId && e.courseId === courseId)),
-  }));
-},
+  },
 }));
