@@ -15,7 +15,7 @@ import { checkRoleAdmin } from "../middlewares/checkRoleAdminDBMiddleware.js";
 import { checkRoles } from "../middlewares/checkRolesDBMiddleware.js";
 
 // import database
-import { PrismaClient } from "../../generated/prisma/index.js";
+import { PrismaClient } from "../../generated/prisma/client.js";
 const prisma = new PrismaClient();
 
 const router = Router();
