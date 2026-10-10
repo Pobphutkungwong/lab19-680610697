@@ -205,4 +205,48 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
       ),
     }));
   }
+  
+addStudent: async (studentData) => {
+  const payload = {
+    ...studentData,
+    emails: studentData.emails.map((e) => e.address),
+  };
+  const res = await api().post("/students", payload);
+  set((state) => ({ students: [...state.students, fromApiStudent(res.data.data)] }));
+},
+
+updateStudent: async (studentData) => {
+  const payload = {
+    ...studentData,
+    emails: studentData.emails.map((e) => e.address),
+  };
+  const res = await api().put("/students", payload);
+  const updated = fromApiStudent(res.data.data);
+  set((state) => ({
+    students: state.students.map((s) => (s.studentId === updated.studentId ? updated : s)),
+  }));
+},
+
+removeStudent: async (studentId) => {
+  await api().delete("/students", { data: { studentId } });
+  set((state) => ({
+    students: state.students.filter((s) => s.studentId !== studentId),
+    enrollments: state.enrollments.filter((e) => e.studentId !== studentId),
+  }));
+},
+
+updateEnrollment: async (studentId, courseId, newCourseId) => {
+  const res = await api().put("/enrollments", { studentId, courseId, newCourseId });
+  const updated = res.data.data;
+  set((state) => ({
+    enrollments: state.enrollments.map((e) => (e.id === updated.id ? updated : e)),
+  }));
+},
+
+dropEnrollment: async (studentId, courseId) => {
+  await api().delete("/enrollments", { data: { studentId, courseId } });
+  set((state) => ({
+    enrollments: state.enrollments.filter((e) => !(e.studentId === studentId && e.courseId === courseId)),
+  }));
+},
 }));

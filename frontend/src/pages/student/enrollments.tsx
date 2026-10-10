@@ -178,6 +178,45 @@ export default function StudentEnrollmentsPage() {
         </Dialog>
       </div>
 
+            // ใน Dialog เปลี่ยนวิชา
+<Dialog open={isOpen} onOpenChange={setIsOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>เปลี่ยนวิชา {courseId}</DialogTitle>
+      <DialogDescription>
+        เลือกวิชาใหม่แทนวิชา {courseId} (เลือกได้เฉพาะวิชาที่ยังไม่ได้ลงทะเบียน)
+      </DialogDescription>
+    </DialogHeader>
+    {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+    <Select value={newCourseId} onValueChange={setNewCourseId}>
+      <SelectTrigger>
+        <SelectValue placeholder="เลือกวิชา" />
+      </SelectTrigger>
+      <SelectContent>
+        {availableCourses.map((c) => (
+          <SelectItem key={c.courseId} value={c.courseId}>
+            {c.courseId} {c.title}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    <DialogFooter>
+      <Button
+        disabled={!newCourseId}
+        onClick={async () => {
+          try {
+            await updateEnrollment(studentId, courseId, newCourseId);
+            setIsOpen(false);
+          } catch (err: any) {
+            setError(err.response?.data?.message || "เกิดข้อผิดพลาดในการเปลี่ยนวิชา");
+          }
+        }}
+      >
+        <ArrowRightLeft className="w-4 h-4 mr-2" /> บันทึก
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
       {dropError && <p className="text-sm text-destructive">{dropError}</p>}
 
       <div className="rounded-lg border">

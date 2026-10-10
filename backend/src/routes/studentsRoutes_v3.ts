@@ -57,6 +57,65 @@ router.get(
   },
 );
 
+router.put("/", checkAuthen, async (req: Request, res: Response) => {
+  try {
+    const parseResult = zStudentPutBody.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ success: false, message: "Validation error", errors: parseResult.error.format() });
+    }
+
+    const { studentId, firstName, lastName, program, interests, emails } = parseResult.data;
+    const user = (req as any).user;
+
+    if (user.role !== "ADMIN" && user.studentId !== studentId) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const existingStudent = await prisma.student.findUnique({ where: { studentId } });
+    if (!existingStudent) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    const updatedStudent = await prisma.student.update({
+      where: { studentId },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(program && { program }),
+        ...(interests && { interests }),
+        ...(emails && { emails }),
+      },
+    });
+
+    return res.status(200).json({ success: true, message: "Student updated successfully", data: updatedStudent });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.delete("/", checkAuthen, checkRoleAdminDB, async (req: Request, res: Response) => {
+  try {
+    const { studentId } = req.body;
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "studentId is required" });
+    }
+
+    const student = await prisma.student.findUnique({ where: { studentId } });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    await prisma.$transaction([
+      prisma.enrollment.deleteMany({ where: { studentId } }),
+      prisma.student.delete({ where: { studentId } }),
+    ]);
+
+    return res.status(200).json({ success: true, message: "Student deleted successfully", data: student });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // GET /api/v3/students/{studentId}
 router.get(
   "/:studentId",

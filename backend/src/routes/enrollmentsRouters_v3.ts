@@ -257,4 +257,70 @@ router.delete(
   },
 );
 
+router.put("/", checkAuthen, async (req: Request, res: Response) => {
+  try {
+    const parseResult = zEnrollmentPutBody.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ success: false, message: "Validation error" });
+    }
+
+    const { studentId, courseId, newCourseId } = parseResult.data;
+    const user = (req as any).user;
+
+    if (user.role !== "ADMIN" && user.studentId !== studentId) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    if (courseId === newCourseId) {
+      return res.status(400).json({ success: false, message: "New course must be different from current course" });
+    }
+
+    const currentEnrollment = await prisma.enrollment.findFirst({ where: { studentId, courseId } });
+    if (!currentEnrollment) {
+      return res.status(404).json({ success: false, message: "Current enrollment not found" });
+    }
+
+    const newCourse = await prisma.course.findUnique({ where: { courseId: newCourseId } });
+    if (!newCourse) {
+      return res.status(404).json({ success: false, message: "New course not found" });
+    }
+
+    const duplicateEnrollment = await prisma.enrollment.findFirst({ where: { studentId, courseId: newCourseId } });
+    if (duplicateEnrollment) {
+      return res.status(409).json({ success: false, message: "Already enrolled in this course" });
+    }
+
+    const updated = await prisma.enrollment.update({
+      where: { id: currentEnrollment.id },
+      data: { courseId: newCourseId },
+    });
+
+    return res.status(200).json({ success: true, message: "Enrollment updated successfully", data: updated });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.delete("/", checkAuthen, async (req: Request, res: Response) => {
+  try {
+    const { studentId, courseId } = req.body;
+    const user = (req as any).user;
+
+    if (user.role !== "ADMIN" && user.studentId !== studentId) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const enrollment = await prisma.enrollment.findFirst({ where: { studentId, courseId } });
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: "Enrollment not found" });
+    }
+
+    await prisma.enrollment.delete({ where: { id: enrollment.id } });
+
+    return res.status(200).json({ success: true, message: "Enrollment deleted successfully", data: enrollment });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
