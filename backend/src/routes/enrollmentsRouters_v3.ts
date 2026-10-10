@@ -3,7 +3,8 @@ import { zEnrollmentBody, zEnrollmentPutBody } from "../libs/zodValidators.ts";
 
 import type { CustomRequest } from "../libs/types.ts";
 
-// import authentication middleware
+// import authentication 
+import { checkAuthen } from "../middlewares/authenMiddleware";
 import { authenticateToken } from "../middlewares/authenMiddleware.ts";
 import { checkRoles } from "../middlewares/checkRolesDBMiddleware.ts";
 

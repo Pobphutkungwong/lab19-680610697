@@ -1,11 +1,6 @@
 import { z } from "zod";
 
 ////// Course Validators //////
-export const zEnrollmentPutBody = z.object({
-  studentId: z.string(),
-  courseId: z.string(),
-  newCourseId: z.string(),
-});
 export const zCourseId = z
   .string()
   .length(6, { message: "Course ID must be 6 digits." });
